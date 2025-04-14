@@ -32,15 +32,14 @@ namespace villas {
       static std::unordered_map<Stats::Type,std::string> type_subset;
       static prometheus::Exposer* exposer;
       static std::shared_ptr<prometheus::Registry> metrics_registry;
-      static prometheus::Family<prometheus::Gauge>* family;
+      prometheus::Family<prometheus::Gauge>* family;
       std::unordered_map<std::string, prometheus::Gauge&>gauges;
     public:
       MetricsExporter();
       void reset();
-      void check_family(int port);
-      void loop_instruction(std::shared_ptr<Stats> stats); //queezy about violating ownership :(
+      void register_node(int port,node::Node *n);
+      void loop_instruction(std::shared_ptr<Stats> stats);
       void shutdown();
-      void register_node(node::Node *n);
   };
 
 } // namespace villas

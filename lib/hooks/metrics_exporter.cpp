@@ -25,8 +25,7 @@ namespace villas{
 
   void StatsExporterHook::start() {
     assert(state == State::PREPARED);
-    metrics_exporter.check_family(port);
-    metrics_exporter.register_node(node);
+    metrics_exporter.register_node(port,node);
     state = State::STARTED;
   }
 
