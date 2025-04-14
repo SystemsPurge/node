@@ -1,6 +1,8 @@
-# Warning: metrics are not properly labeled yet.
+# Usage.
 Build with -DWITH_METRICS for a prometheus exporter hook.
 Alternatively use image soullessblob/villas-node:prometheus the same way one would use the official image.
+Metrics follow the prometheus best practices, and has the form `<metric_name>{node=<node_short_name>, accumulator=<stat_type_name>}`, with stat_type_name originating from Stats::types.
+Only a subset of accumulators/metrics for now.
 
 # Example docker compose.
 
