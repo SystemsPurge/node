@@ -1,73 +1,91 @@
-# <img src="doc/pictures/villas_node.png" width=40 /> VILLASnode
+# Warning: metrics are not properly labeled yet.
+Build with -DWITH_METRICS for a prometheus exporter hook.
+Alternatively use image soullessblob/villas-node:prometheus the same way one would use the official image.
 
-[![build status](https://git.rwth-aachen.de/acs/public/villas/node/badges/master/pipeline.svg)](https://git.rwth-aachen.de/acs/public/villas/node/-/pipelines/)
+# Example docker compose.
 
-This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
-VILLASnode is a client/server application to connect simulation equipment and software such as:
+```
+services:
+  node:
+    image: soullessblob/villas-node:prometheus
+    hostname: node-prom
+    container_name: node-prom
+    command: ["node","-d","debug","/configs/test-conf.conf"]
+    volumes:
+      - ./test-conf.conf:/configs/test-conf.conf
+    ports:
+      - 9096:9096
+      - 80:80
 
- - OPAL-RT RT-LAB,
- - RTDS GTFPGA cards,
- - RTDS GTWIF cards,
- - Simulink,
- - LabView,
- - and FPGA models
+  prom:
+    image: prom/prometheus
+    hostname: prom
+    container_name: prom
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+```
 
-by using protocols such as:
+With node config:
+```
+{
+  "http": {
+    "port": 8080
+  },
+  "hugepages": 0,
+  "nodes": {
+    "siggen": {
+      "type": "signal",
+      "signal": [
+        "sine",
+        "sine"
+      ],
+      "rate": 10,
+      "values": 2
+    },
+    "relay": {
+      "type": "websocket",
+      "destinations": [
+        "https://s-dev.k8s.eonerc.rwth-aachen.de/ws/relay/hyperride-test"
+      ],
+       "in":{
+          "hooks":[
+            {
+              "type":"metrics",
+              "port":9096
+            }
+          ]
+            
+        }
+    }
+  },
+  "paths": [
+    {
+      "in": "siggen",
+      "out": "relay"
+    }
+  ],
+  "logging": {
+    "level": "info"
+  },
+  "uuid": "b3b45caf-c560-4d9c-9f66-4b9538a0a07a"
+}
+```
 
- - IEEE 802.2 Ethernet / IP / UDP,
- - ZeroMQ & nanomsg,
- - MQTT & AMQP
- - WebSockets
- - Shared Memory
- - Files
- - IEC 61850 Sampled Values / GOOSE
- - Analog/Digital IO via Comedi drivers
- - Infiniband (ibverbs)
+And a static prometheus config for testing: 
+```
+global:
+  scrape_interval:     15s
 
-It's designed with a focus on very low latency to achieve real-time exchange of simulation data.
-VILLASnode is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Center in Aachen, Germany.
+  external_labels:
+    monitor: 'codelab-monitor'
 
-## Documentation
+scrape_configs:
+  - job_name: 'prometheus'
 
-User documentation is available here: <https://villas.fein-aachen.org/docs/>
+    scrape_interval: 5s
 
-## Related Projects
-
-- [MIOB](https://github.com/RWTH-ACS/miob)
-- [DINO](https://github.com/RWTH-ACS/dino)
-
-## Contributing
-
-All contributions are welcome!
-If you want to contribute to VILLASnode, please visit the [contribution guidelines](https://villas.fein-aachen.org/docs/node/development/contributing/) in our documentation.
-
-## License
-
-This project is released under the terms of the [Apache 2.0 license](LICENSE).
-
-We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
-
-- A. Monti et al., "[A Global Real-Time Superlab: Enabling High Penetration of Power Electronics in the Electric Grid](https://ieeexplore.ieee.org/document/8458285/)," in IEEE Power Electronics Magazine, vol. 5, no. 3, pp. 35-44, Sept. 2018.
-- S. Vogel, M. Mirz, L. Razik and A. Monti, "[An open solution for next-generation real-time power system simulation](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8245739&isnumber=8244404)," 2017 IEEE Conference on Energy Internet and Energy System Integration (EI2), Beijing, 2017, pp. 1-6.
-
-For other licensing options please consult [Prof. Antonello Monti](mailto:amonti@eonerc.rwth-aachen.de).
-
-- SPDX-FileCopyrightText: 2014-2025 Institute for Automation of Complex Power Systems, RWTH Aachen University
-- SPDX-FileCopyrightText: 2023-2025 OPAL-RT Germany GmbH
-- SPDX-FileCopyrightText: 2022-2025 Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- SPDX-FileCopyrightText: 2018-2025 Steffen Vogel <post@steffenvogel.de>
-- SPDX-FileCopyrightText: 2018 Daniel Krebs <dkrebs@eonerc.rwth-aachen.de>
-- SPDX-License-Identifier: Apache-2.0
-
-## Contact
-
-[![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
-
-- Steffen Vogel <post@steffenvogel.de>
-- Niklas Eiling <niklas.eiling@eonerc.rwth-aachen.de>
-- Felix Wege <fwege@eonerc.rwth-aachen.de>
-- Alexandra Bach <alexandra.bach@eonerc.rwth-aachen.de>
-
-[Institute for Automation of Complex Power Systems (ACS)](http://www.acs.eonerc.rwth-aachen.de)
-[EON Energy Research Center (EONERC)](http://www.eonerc.rwth-aachen.de)
-[RWTH University Aachen, Germany](http://www.rwth-aachen.de)
+    static_configs:
+      - targets: ['node-prom:9096']
+```
