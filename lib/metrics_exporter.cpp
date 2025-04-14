@@ -17,6 +17,8 @@ prometheus::Exposer* MetricsExporter::exposer;
 
 std::shared_ptr<prometheus::Registry> MetricsExporter::metrics_registry;
 
+std::unordered_map<std::string, prometheus::Family<prometheus::Gauge>&> MetricsExporter::families;
+
 std::unordered_map<Stats::Metric,std::string> MetricsExporter::metrics_subset = {
     {Stats::Metric::SMPS_SKIPPED,"skipped"},
     {Stats::Metric::OWD,"owd"},
@@ -49,14 +51,22 @@ void MetricsExporter::register_node(int port, Node *n){
         MetricsExporter::exposer = new prometheus::Exposer{"0.0.0.0:"+std::to_string(port)};
         MetricsExporter::metrics_registry = std::make_shared<prometheus::Registry>();
         exposer->RegisterCollectable(metrics_registry);
+        for(auto& metric:metrics_subset){
+            families.emplace(
+                metric.second,
+                prometheus::BuildGauge().Name(metric.second).Register(*MetricsExporter::metrics_registry)
+            );
+        }
     }
     
-    family = &prometheus::BuildGauge().Name(node_name+"_node").Register(*MetricsExporter::metrics_registry);
     logger->debug("Registering node "+node_name);
     for(auto& metric: metrics_subset){
         for (auto& type_name:type_subset){
             std::string full_metric_name = metric.second+"_"+type_name.second;
-            gauges.emplace(full_metric_name,MetricsExporter::family->Add({{metric.second, type_name.second}}));
+            gauges.emplace(
+                full_metric_name,
+                MetricsExporter::families.at(metric.second).Add({{"accumulator",type_name.second},{"node",node_name}})
+            );
         }
     }
 }
@@ -76,13 +86,6 @@ void MetricsExporter::loop_instruction(std::shared_ptr<Stats> stats){
 void MetricsExporter::shutdown(){ 
     logger->debug("Shutting down metrics exporter.");
     if(MetricsExporter::exposer){
-        for(auto& gauge: gauges){
-            MetricsExporter::family->Remove(&gauge.second);
-        }
-        if(MetricsExporter::family->GetConstantLabels().size() == 0){ 
-            logger->debug("Family empty, destroying.");
-            MetricsExporter::metrics_registry->Remove(*family);
-        }
         //destroy explicitely, until figure out how to STOP LISTENING
         MetricsExporter::exposer->~Exposer();
     }

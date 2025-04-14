@@ -32,7 +32,7 @@ namespace villas {
       static std::unordered_map<Stats::Type,std::string> type_subset;
       static prometheus::Exposer* exposer;
       static std::shared_ptr<prometheus::Registry> metrics_registry;
-      prometheus::Family<prometheus::Gauge>* family;
+      static std::unordered_map<std::string, prometheus::Family<prometheus::Gauge>&> families;
       std::unordered_map<std::string, prometheus::Gauge&>gauges;
     public:
       MetricsExporter();
