@@ -481,6 +481,17 @@ if ! pkg-config "libmodbus >= 3.1.0" && \
     popd
 fi
 
+if ! pkg-config "libprometheus-cpp >= 1.0.0" && \
+    should_build "libprometheus-cpp" "for the prometheus exporter"; then
+    git clone --recurse-submodules --branch v1.2.0 https://github.com/jupp0r/prometheus-cpp.git
+    mkdir -p prometheus-cpp/_build
+    cmake -Bprometheus-cpp/_build ./prometheus-cpp -DBUILD_SHARED_LIBS=ON -DENABLE_PUSH=OFF -DENABLE_COMPRESSION=OFF
+    cmake --build ./prometheus-cpp/_build
+    ctest -V
+    cmake --install ./prometheus-cpp/_build
+    ldconfig
+fi
+
 popd >/dev/null
 rm -rf ${TMPDIR}
 

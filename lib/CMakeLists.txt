@@ -55,6 +55,12 @@ set(LIB_SRC
     super_node.cpp
 )
 
+if(WITH_METRICS)
+    list(APPEND LIB_SRC metrics_exporter.cpp)
+    list(APPEND LIBRARIES PkgConfig::LIBPROMETHEUSCORE)
+    list(APPEND LIBRARIES PkgConfig::LIBPROMETHEUSPULL)
+endif()
+
 if(WITH_WEB)
     list(APPEND LIB_SRC
         web.cpp

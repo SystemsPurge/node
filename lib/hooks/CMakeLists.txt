@@ -35,6 +35,7 @@ set(HOOK_SRC
     shift_ts.cpp
     skip_first.cpp
     stats.cpp
+    base_stats.cpp
     ts.cpp
 )
 
@@ -44,6 +45,10 @@ endif()
 
 if(WITH_OPENMP)
     list(APPEND LIBRARIES OpenMP::OpenMP_CXX)
+endif()
+
+if(WITH_METRICS)
+    list(APPEND HOOK_SRC metrics_exporter.cpp)
 endif()
 
 add_library(hooks STATIC ${HOOK_SRC})

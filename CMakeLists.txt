@@ -75,7 +75,6 @@ find_package(Etherlab)
 find_package(Lua)
 find_package(LibDataChannel)
 find_package(re)
-
 # Check for tools
 find_program(PASTE NAMES paste)
 if(NOT PASTE)
@@ -90,7 +89,8 @@ find_program(PROTOBUF_COMPILER NAMES protoc)
 option(WITHOUT_GPL "Build VILLASnode without any GPL code" OFF)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
-
+pkg_check_modules(LIBPROMETHEUSCORE IMPORTED_TARGET prometheus-cpp-core)
+pkg_check_modules(LIBPROMETHEUSPULL IMPORTED_TARGET prometheus-cpp-pull)
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.13)
 pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET REQUIRED libwebsockets>=3.1.0)
 pkg_check_modules(PROTOBUF IMPORTED_TARGET protobuf>=2.6.0)
@@ -197,6 +197,7 @@ cmake_dependent_option(WITH_NODE_SHMEM      "Build with shmem node-type"        
 cmake_dependent_option(WITH_NODE_SIGNAL     "Build with signal node-type"                           "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_SOCKET     "Build with socket node-type"                           "${WITH_DEFAULTS}" "LIBNL3_ROUTE_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_STATS      "Build with stats node-type"                            "${WITH_DEFAULTS}" "" OFF)
+cmake_dependent_option(WITH_METRICS         "Build with prometheus metrics exporter"                            "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_TEMPER     "Build with temper node-type"                           "${WITH_DEFAULTS}" "LIBUSB_FOUND" OFF)
 cmake_dependent_option(WITH_NODE_TEST_RTT   "Build with test_rtt node-type"                         "${WITH_DEFAULTS}" "" OFF)
 cmake_dependent_option(WITH_NODE_ULDAQ      "Build with uldaq node-type"                            "${WITH_DEFAULTS}" "LIBULDAQ_FOUND" OFF)
