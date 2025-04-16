@@ -1,10 +1,11 @@
 # Usage.
+## Hook approach
 Build with -DWITH_METRICS for a prometheus exporter hook.
 Alternatively use image soullessblob/villas-node:prometheus the same way one would use the official image.
 Metrics follow the prometheus best practices, and has the form `<metric_name>{node=<node_short_name>, accumulator=<stat_type_name>}`, with stat_type_name originating from Stats::types.
-Only a subset of accumulators/metrics for now.
-
-# Example docker compose.
+They are exposed by adding a hook of metrics type to the in/out field of a node entry in the node config. 
+Exposing more than one port will not work because the first constructed hook sets the exposer to the corresponding port, next ones will not attempt to redeclare the exposer if a port is set.
+### Example docker compose.
 
 ```
 services:
@@ -88,6 +89,25 @@ scrape_configs:
 
     scrape_interval: 5s
 
+    static_configs:
+      - targets: ['node-prom:9096']
+```
+
+## API approach
+Found in the no-extern-deps branch. Build and configure node according to the official documentation.
+Metrics are exposed by adding a hook of type "stats" to the node config from which metrics are required. They are then found under the /metrics path. The scrape_configs of prometheus.yml become:
+```
+global:
+  scrape_interval:     15s
+
+  external_labels:
+    monitor: 'codelab-monitor'
+
+scrape_configs:
+  - job_name: 'prometheus'
+
+    scrape_interval: 5s
+    metrics_path: '/api/v2/metrics' #<=== add this
     static_configs:
       - targets: ['node-prom:9096']
 ```
