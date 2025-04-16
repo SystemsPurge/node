@@ -109,5 +109,5 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: '/api/v2/metrics' #<=== add this
     static_configs:
-      - targets: ['node-prom:9096']
+      - targets: ['node-prom:8080'] #<== metrics are now exposed under the default hostname:port of the villasnode http config
 ```
